@@ -72,6 +72,19 @@ Each task must be completed using an iterative process involving LLM suggestions
 
 ---
 
+## Fix Summary
+
+- **Task 1:** `Barrel.update()` rolled the ladder-descent check as `random.random() < 0.7`,
+  so barrels took the first ladder they reached ~70% of the time instead of the intended
+  ~30%. Changed the threshold to `0.3`.
+- **Task 2:** `theme_color(score)` now warms the background toward orange as score climbs.
+- **Task 3:** `on_barrel_jumped(player, barrel)` spawns a short-lived floating `+100` label
+  at the barrel's position.
+- **Task 4:** `score_multiplier(score)` returns `2` once score reaches 500, `None` (default
+  1x) before that.
+
+---
+
 ## Folder Structure
 
 ```
