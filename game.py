@@ -28,17 +28,24 @@ def platform_y(platform, x):
 
 def theme_color(score):
     """Return an (r, g, b) background colour for the current score, or None for the default."""
-    pass
+    if score <= 0:
+        return None
+    t = min(score / 2000, 1.0)
+    warm = (120, 60, 20)
+    return tuple(int(BG[i] + (warm[i] - BG[i]) * t) for i in range(3))
+
+
+floating_texts = []  # [(pos, remaining_seconds), ...] from on_barrel_jumped
 
 
 def on_barrel_jumped(player, barrel):
     """Called when the player clears a barrel; add a bonus effect here."""
-    pass
+    floating_texts.append([pygame.Vector2(barrel.pos.x, barrel.pos.y - BARREL_R), 0.6])
 
 
 def score_multiplier(score):
     """Return a multiplier applied to points earned from clearing a barrel, or None for the default 1x."""
-    pass
+    return 2 if score >= 500 else None
 
 
 class Player:
@@ -164,7 +171,7 @@ class Barrel:
         for index, (lx, _, upper) in enumerate(LADDERS):
             if upper == self.plat and abs(self.pos.x - lx) < 3 and index not in self.skip:
                 self.skip.add(index)
-                if random.random() < 0.7:
+                if random.random() < 0.3:
                     self.ladder = index
                     self.pos.x = lx
 
@@ -184,6 +191,9 @@ def draw_scene(screen, font, player, barrels, score, lives, state):
     pygame.draw.circle(screen, (255, 150, 200), (PRINCESS_POS[0], PRINCESS_POS[1] - 14), 10)
     for barrel in barrels:
         pygame.draw.circle(screen, (170, 100, 40), barrel.pos, BARREL_R)
+    for pos, _ in floating_texts:
+        label = font.render("+100", True, (255, 230, 120))
+        screen.blit(label, label.get_rect(center=(pos.x, pos.y)))
     body = pygame.Rect(0, 0, PLAYER_W, PLAYER_H)
     body.midbottom = (player.pos.x, player.pos.y)
     pygame.draw.rect(screen, (50, 180, 240), body)
@@ -214,9 +224,13 @@ def main():
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
                 player.reset()
                 barrels.clear()
+                floating_texts.clear()
                 score, lives, state = 0, 3, "play"
         if state == "play":
             player.update(dt, pygame.key.get_pressed())
+            for text in floating_texts:
+                text[1] -= dt
+            floating_texts[:] = [t for t in floating_texts if t[1] > 0]
             spawn_timer -= dt
             if spawn_timer <= 0:
                 barrels.append(Barrel())
